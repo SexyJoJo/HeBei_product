@@ -2,7 +2,7 @@ def get_IOI(temperatures):
     """
     计算逆温强度
     :param temperatures: 索引为高度（km）， 值为温度（℃） 的Series
-    :return: 存在逆温层返回逆温强度，不存在逆温层返回None
+    :return: [[底高1， 顶高1，逆温强度1], [底高2， 顶高2，逆温强度2], ... ](可能出现多个逆温层)
     """
     results = []    # 存放各逆温层的逆温强度
     i = 0
@@ -29,9 +29,6 @@ def get_IOI(temperatures):
 
             # 温差大于1视为存在逆温层
             if delta_T > 1:
-                result = delta_T / delta_H
-                results.append(round(result, 2))
-    if results:
-        return max(results)
-    else:
-        return None
+                result = [H1, H2, round(delta_T / delta_H, 2)]
+                results.append(result)
+    return results
