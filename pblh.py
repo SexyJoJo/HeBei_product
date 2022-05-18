@@ -48,6 +48,8 @@ def get_prs(height, data_height, data_prs):
 
 def get_wspeed(height, data_height, data_wspeeds):
     f = interp1d(data_height, data_wspeeds, bounds_error=False, fill_value='extrapolate')
+    if f(height) <= 0:
+        return 0.1
     return f(height)
 
 def get_wdirect(height, data_height, data_wdirect):
@@ -65,7 +67,7 @@ def get_wdirect(height, data_height, data_wdirect):
                     j -= 1
     except IndexError:
         pass
-    f = interp1d(data_height, data_wdirect)
+    f = interp1d(data_height, data_wdirect, bounds_error=False, fill_value='extrapolate')
     w_dircect = f(height)
     if w_dircect >= 360:
         w_dircect -= 360
@@ -87,7 +89,8 @@ def get_pblh(heights, temperatures, pressures, w_speeds, w_directs):
     """
     G = 9.8
     Rc = 0.21
-    h = heights[0]
+    h0 = 0
+    h = h0
     t0 = get_temp(h, heights, temperatures)
     p0 = get_prs(h, heights, pressures)
     potem0 = get_potem(t0, p0)
@@ -100,9 +103,9 @@ def get_pblh(heights, temperatures, pressures, w_speeds, w_directs):
         w_direct = get_wdirect(h, heights, w_directs)
         u = w_speed * math.sin(w_direct)    # 纬向风分量
         v = w_speed * math.cos(w_direct)    # 经向风分量
-        Ri = (G * (h - heights[0]) / potem) * ((potem - potem0) / (u**2 + v**2))
+        Ri = (G * (h - h0) / potem) * ((potem - potem0) / (u**2 + v**2))
 
         if Ri / Rc > 1:
-            return Ri
+            return h
         else:
-            h += 10     # TODO 高度分辨率
+            h += 1
