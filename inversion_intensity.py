@@ -1,9 +1,15 @@
-def get_IOI(temperatures):
+import pandas as pd
+
+
+def get_IOI(heights, temperatures):
     """
     计算逆温强度
     :param temperatures: 索引为高度（km）， 值为温度（℃） 的Series
     :return: [[底高1， 顶高1，逆温强度1], [底高2， 顶高2，逆温强度2], ... ](可能出现多个逆温层)
     """
+    # heights = list(map(lambda x: float(x) / 1000, heights))
+    # temperatures = pd.Series(temperatures, heights)
+    print(temperatures)
     results = []    # 存放各逆温层的逆温强度
     i = 0
     while i < len(temperatures) - 1:
@@ -14,7 +20,7 @@ def get_IOI(temperatures):
         # 气温随高度增加而增加，出现逆温
         else:
             # 逆温层底高H1:逆温层起始点高度
-            H1 = float(temperatures.index[i]) * 10  # 单位：百米
+            H1 = float(heights[i]) * 10  # 单位：米
             T1 = float(temperatures[i])
             # 寻找顶高H2：逆温层中止点高度
             while temperatures[i] < temperatures[i + 1]:
@@ -22,7 +28,7 @@ def get_IOI(temperatures):
                     i += 1
                     break
                 i += 1
-            H2 = float(temperatures.index[i]) * 10  # 单位：百米
+            H2 = float(heights[i])  # 单位：米
             T2 = float(temperatures[i])
             delta_H = H2 - H1
             delta_T = T2 - T1
