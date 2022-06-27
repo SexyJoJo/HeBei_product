@@ -1,6 +1,6 @@
 import math
-from scipy.interpolate import interp1d
-
+from 测试.parse_utils import *
+import numpy as np
 
 def get_temp(height, data_height, data_temp):
     f = interp1d(data_height, data_temp, bounds_error=False, fill_value='extrapolate')
@@ -53,7 +53,7 @@ def get_pblh(heights, temperatures, pressures, w_speeds, w_directs):
     """
     try:
         G = 9.8
-        Rc = 0.21
+        Rc = 0.25
         h0 = 0
         h = h0
         t0 = get_temp(h, heights, temperatures)
@@ -76,3 +76,46 @@ def get_pblh(heights, temperatures, pressures, w_speeds, w_directs):
                 h += 1
     except Exception as e:
         print(e)
+
+
+def get_pblh2(sounding_df):
+    """
+    探空数据位温法计算边界层高度
+    @param sounding_df:
+    @return:
+    """
+    sounding_df = SoundingUtils.cap_by_height(sounding_df, 2000)
+    heights = sounding_df["GPH"].tolist()
+    temperatures = sounding_df["TEM"].tolist()
+
+    h = heights[0]
+    grids = []
+    while h <= 2000:
+        t = SoundingUtils.interp_tempers(h, heights, temperatures)
+        p = MetCals.height2prs(h)
+        # 第一次计算位温特殊处理
+        if h == heights[0]:
+            pre_potem = MetCals.get_potem(t, p)
+            h += 20
+            continue
+        else:
+            crr_potem = MetCals.get_potem(t, p)
+            grid = (crr_potem - pre_potem) / 20
+            grids.append(grid)
+            # 推进循环
+            pre_potem = crr_potem
+            h += 20
+
+    grids = np.array(grids)
+    pblh = heights[0] + grids.argmax() * 20
+    return int(pblh)
+
+
+if __name__ == '__main__':
+    for root, _, files in os.walk(r"D:\Data\microwave radiometer\Sounding\54510"):
+        for file in files:
+            if file.endswith("SURP.txt"):
+                fullpath = os.path.join(root, file)
+                df = ParseFiles.parse_sounding(fullpath)
+                print(get_pblh2(df))
+
