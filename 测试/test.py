@@ -4,6 +4,7 @@ import pandas as pd
 from pblh import get_pblh
 from VI import get_VI
 
+
 def read_file(file):
     """读取目录中lv2文件"""
     print(f"正在处理{file}")
@@ -25,13 +26,14 @@ def read_file(file):
     return t_df
 
 
-for root, _, files in os.walk(r"D:\Data\microwave radiometer\Measured brightness temperature\54510廊坊"):
-    for file in files:
-        if file.endswith("CP_D.txt"):
-            df = read_file(os.path.join(root, file))
-            for i, row in df.iloc[:, 1:-1].iterrows():
-                ioi = get_IOI(row.index, row.values)
-                print(ioi)
+# for root, _, files in os.walk(r"D:\Data\microwave radiometer\Measured brightness temperature\54510廊坊"):
+#     for file in files:
+#         if file.endswith("CP_D.txt"):
+#             df = read_file(os.path.join(root, file))
+#             for i, row in df.iloc[:, 1:-1].iterrows():
+#                 ioi = get_IOI(row.index, row.values)
+#                 print(ioi)
+
 # heights = [150, 270, 390, 510, 630, 750, 870, 990, 1110, 1230, 1350, 1470, 1590, 1710, 1830, 1950, 2070, 2190, 2310,
 #            2430, 2550, 2670, 2790, 2910, 3030, 3150, 3270, 3390, 3630, 3870, 4110, 4350, 4590, 4830, 5070, 5310, 5550,
 #            5790, 6030]
