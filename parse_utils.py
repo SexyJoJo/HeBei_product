@@ -27,7 +27,7 @@ from scipy.interpolate import interp1d
 #         return heights, w_speeds, w_directs
 #
 # @staticmethod
-# def get_tem(path):
+# def get_tem_M(path):
 #     df = pd.read_csv(path, skiprows=2, encoding='gbk')
 #     line = df[df['10'] == 11].iloc[0].tolist()[11: -1]
 #     line = [round(x, 3) for x in line]
@@ -117,7 +117,23 @@ class MetCals:
 class Lv2Utils:
     """微波辐射计Lv2解析工具类"""
     @staticmethod
-    def get_tem(path):
+    def get_time(filename, kind="datetime"):
+        """
+        从LV2文件名中提取时间信息
+        @param filename: 文件名
+        @param kind: 时间的类型（字符串 or datetime对象）
+        @return: datetime对象
+        """
+        string = filename.split("_")[4]
+        time = datetime.strptime(string, "%Y%m%d%H%M%S")
+        if kind == "datetime":
+            return time
+
+        time_str = datetime.strftime(time, "%Y-%m-%d %H:%M:%S")
+        return time_str
+
+    @staticmethod
+    def get_tem_M(path):
         """
         从分钟级Lv2数据中提取温度列表和对应高度列表
         @param path: lv2分钟级文件路径
@@ -132,6 +148,25 @@ class Lv2Utils:
 
         heights = df.columns[11:-1]
         heights = [int(float(x[:-4]) * 1000) for x in heights]
+        return tempers, heights
+
+    @staticmethod
+    def get_tem_D(path):
+        """
+        从日级LV2数据中提取温度dataframe和高度列表
+        @param path: lv2日级文件路径
+        @return: 温度dataframe、高度列表
+        """
+        if path.endswith("QC.csv"):
+            df = pd.read_csv(path, encoding='gbk')
+            tempers = df[df['10'] == 11]
+            heights = df.columns[11:-1]
+            heights = [int(float(x[:-3]) * 1000) for x in heights]
+        else:
+            df = pd.read_csv(path, skiprows=2, encoding='gbk')
+            tempers = df[df['10'] == 11]
+            heights = df.columns[11:-1]
+            heights = [int(float(x[:-4]) * 1000) for x in heights]
         return tempers, heights
 
     @staticmethod
@@ -250,8 +285,8 @@ class ParseFiles:
                 temp_df['Heigh_Alti'] = temp_df['Heigh_Alti'].astype(int)
                 df = pd.concat([df, temp_df], axis=0)
         df = df.sort_values(by='Heigh_Alti')
-        if not os.path.exists(r"../Data"):
-            os.mkdir(r"../Data")
+        if not os.path.exists(r"Data"):
+            os.mkdir(r"Data")
         df.to_csv(rf"./Data/wind_{station}_{time_str[:10] + time_str[11:13]}.txt", sep=" ", index=False)
         print(df)
 
