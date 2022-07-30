@@ -17,15 +17,6 @@ w_direct = [205.0, 289.4, 314.1, 312.4, 265.6, 249.3, 244.4, 247.7, 245.9, 251.7
 rhu = [26.26, 12.07, 7.38, 7.65, 8.81, 10.07, 9.83, 9.93, 10.58, 12.51, 14.45, 15.07, 14.14, 13.55, 13.79, 17.48, 21.28, 19.33, 19.65, 19.52, 24.43, 24.43, 24.43]
 
 
-IOI_result = inversion_intensity.get_IOI(height, tem)
-pblh_result = pblh.get_pblh(height, tem, prs, w_speed, w_direct)
-VI_result = VI.get_VI(height, tem, prs, w_speed, w_direct)
-plt = TlnP.plot_tlnp(tem, prs, rhu, w_speed, w_direct)
-plt.show()
-print(IOI_result)
-print(pblh_result)
-print(VI_result)
-
 # 计算逆温强度（若存在逆温层，则返回二维数组，每个一维数组对应一个逆温层）
 # [[底高1， 顶高1，逆温强度1], [底高2， 顶高2，逆温强度2], ... ](可能出现多个逆温层)
 IOI_result = inversion_intensity.get_IOI(height, tem)
