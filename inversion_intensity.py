@@ -9,7 +9,6 @@ def get_IOI(heights, temperatures):
     """
     # heights = list(map(lambda x: float(x) / 1000, heights))
     # temperatures = pd.Series(temperatures, heights)
-    print(temperatures)
     results = []    # 存放各逆温层的逆温强度
     i = 0
     while i < len(temperatures) - 1:
