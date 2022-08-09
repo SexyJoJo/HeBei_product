@@ -6,69 +6,6 @@ from datetime import datetime
 from scipy.interpolate import interp1d
 
 
-# class ParseUtils:
-#     """解析工具类"""
-#     @staticmethod
-#     def get_height_speed_direct(path):
-#         wind_df = pd.read_table(path, sep=' ')
-#         heights = wind_df["Heigh_Alti"].tolist()
-#         w_speeds = wind_df["WIN_S"].tolist()
-#         w_directs = wind_df["WIN_D"].tolist()
-#
-#         drop = []
-#         for i in range(len(heights)):
-#             if w_speeds[i] > 9999 or w_directs[i] > 9999:
-#                 drop.append(i)
-#
-#         for i in drop[::-1]:
-#             del heights[i]
-#             del w_speeds[i]
-#             del w_directs[i]
-#         return heights, w_speeds, w_directs
-#
-# @staticmethod
-# def get_tem_M(path):
-#     df = pd.read_csv(path, skiprows=2, encoding='gbk')
-#     line = df[df['10'] == 11].iloc[0].tolist()[11: -1]
-#     line = [round(x, 3) for x in line]
-#
-#     heights = df.columns[11:-1]
-#     heights = [int(float(x[:-4]) * 1000) for x in heights]
-#     return line, heights
-#
-#     @staticmethod
-#     def get_prs(heights):
-#         def height2prs(height):
-#             return round(pow(1 - height / 44331, 1.0 / 0.1903) * 1013.25, 3)
-#
-#         rst = []
-#         for h in heights:
-#             rst.append(height2prs(h))
-#         return rst
-#
-#     @staticmethod
-#     def interpolate_speed(heights, w_speeds):
-#         rst = []
-#         for h in HEIGHT_83:
-#             sp = pblh.interp_wspeed(h, heights, w_speeds)
-#             rst.append(round(float(sp), 3))
-#         return rst
-#
-#     @staticmethod
-#     def interpolate_tem(heights, Height_83, temperature_83):
-#         rst = []
-#         for h in heights:
-#             sp = pblh.get_temp(h, Height_83, temperature_83)
-#             rst.append(round(float(sp), 3))
-#         return rst
-#
-#     @staticmethod
-#     def interpolate_direct(heights, w_directs):
-#         rst = []
-#         for h in HEIGHT_83:
-#             dr = pblh.interp_wdirect(h, heights, w_directs)
-#             rst.append(round(float(dr), 3))
-#         return rst
 class MetCals:
     """气象计算工具"""
     @staticmethod
@@ -151,6 +88,24 @@ class Lv2Utils:
         return tempers, heights
 
     @staticmethod
+    def get_rhu_M(path):
+        """
+        从分钟级Lv2数据中提取温度列表和对应高度列表
+        @param path: lv2分钟级文件路径
+        @return: 相对湿度列表、 高度列表
+        """
+        if not (path.endswith("CP_M.txt") or path.endswith("CP_M.TXT")):
+            raise Exception("未输入CP_M文件")
+
+        df = pd.read_csv(path, skiprows=2, encoding='gbk')
+        rhus = df[df['10'] == 13].iloc[0].tolist()[11: -1]
+        rhus = [round(x, 3) for x in rhus]
+
+        heights = df.columns[11:-1]
+        heights = [int(float(x[:-4]) * 1000) for x in heights]
+        return rhus, heights
+
+    @staticmethod
     def get_tem_D(path):
         """
         从日级LV2数据中提取温度dataframe和高度列表
@@ -170,15 +125,15 @@ class Lv2Utils:
         return tempers, heights
 
     @staticmethod
-    def interp_tempers(height, data_height, data_tempers):
+    def interp_tempers(height, data_heights, data_tempers):
         """
-        根据高度列表插值温度
+        根据高度列表插值温度 (也可以插值湿度等要素)
         @param height: 待插值的高度
-        @param data_height: 高度列表
+        @param data_heights: 高度列表
         @param data_tempers: 温度列表
         @return: height对应的温度
         """
-        f = interp1d(data_height, data_tempers, bounds_error=False, fill_value='extrapolate')
+        f = interp1d(data_heights, data_tempers, bounds_error=False, fill_value='extrapolate')
         return float(f(height))
 
 
@@ -196,15 +151,15 @@ class WindUtils:
         return time
 
     @staticmethod
-    def interp_wspeed(height, data_height, data_wspeeds):
+    def interp_wspeed(height, data_heights, data_wspeeds):
         """
         根据高度列表插值风速
         @param height: 待插值的高度
-        @param data_height: 高度列表
+        @param data_heights: 高度列表
         @param data_wspeeds: 风速列表
         @return: height对应的风速
         """
-        f = interp1d(data_height, data_wspeeds, bounds_error=False, fill_value='extrapolate')
+        f = interp1d(data_heights, data_wspeeds, bounds_error=False, fill_value='extrapolate')
         if f(height) <= 0:
             return 0.1
         return float(f(height))

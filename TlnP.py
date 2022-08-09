@@ -71,3 +71,25 @@ def plot_tlnp(tem, prs, rhu, wind_speed, wind_direct):
 # print(len(w_direct))
 # plot_tlnp(df["TEM"], df["PRS_HWC"], df["RHU"], w_speed, w_direct)
 # print(df["RHU"].tolist())
+#
+#
+# if __name__ == '__main__':
+#     from parse_utils import *
+#     wind = ParseFiles.parse_minute_wind(r"E:\Z_RADA_I_54624_20220805010000_P_WPRD_LC_ROBS.TXT")
+#     w_height = wind["height"].tolist()
+#     w_direct = wind["hori_direct"].tolist()
+#     w_speed = wind["hori_speed"].tolist()
+#
+#     lv2_tem, lv2_height = Lv2Utils.get_tem_M(r"E:\Z_UPAR_I_54624_20220805090000_P_YMWR_6000A_CP_M.txt")
+#     lv2_rhu, _ = Lv2Utils.get_tem_M(r"E:\Z_UPAR_I_54624_20220805090000_P_YMWR_6000A_CP_M.txt")
+#
+#     w_tem, w_rhu = [], []
+#     for h in w_height:
+#         tem = Lv2Utils.interp_tempers(h, lv2_height, lv2_tem)
+#         rhu = Lv2Utils.interp_tempers(h, lv2_height, lv2_rhu)
+#         w_tem.append(tem)
+#         w_rhu.append(rhu)
+#
+#     w_prs = MetCals.bat_height2prs(w_height)
+#     img = plot_tlnp(w_tem, w_prs, w_rhu, w_speed, w_direct)
+#     img.show()
