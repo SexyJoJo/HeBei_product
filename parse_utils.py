@@ -222,8 +222,22 @@ class SoundingUtils:
         return df[df["GPH"] <= end_h]
 
 
+class ForwardUtils:
+    """正演结果解析类"""
+    @staticmethod
+    def freq_and_bt(df, index):
+        """
+        根据索引提取通道频率与亮温
+        @param df: 正演dataframe
+        @param index: 通道索引
+        @return: 通道频率列表， 亮温列表
+        """
+        df = df.loc[index]
+        df["FREQ(GHz)"] = df["FREQ(GHz)"].apply(lambda x: 'CH' + x)
+        return df["FREQ(GHz)"].tolist(), df["BT(K)"].tolist()
+
 class ParseFiles:
-    """解析文件类"""
+    """解析文件类, 一般情况下返回dafaframe"""
     @staticmethod
     def cap_week_wind(file_path, station, time_str):
         """
@@ -264,11 +278,26 @@ class ParseFiles:
         return df
 
     @staticmethod
-    def parse_sounding(file_path):
+    def parse_sounding(file_path, kind="ec"):
         """
         解析探空数据
         @param file_path:
+        @param kind: 探空数据源或ec数据源
         @return:dataframe
         """
-        df = pd.read_csv(file_path, skiprows=1, sep=r'\s+')
+        if kind == "ec":
+            df = pd.read_csv(file_path, skiprows=1, sep=r'\s+')
+        else:
+            df = pd.read_csv(file_path, sep=r'\s+', header=None, names=["TEM", "PRS_HWC", "RHU", "GPH"])
+        return df
+
+    @staticmethod
+    def parse_forward(file_path):
+        """
+        解析正演结果(一般用于反演)
+        @param file_path:
+        @return: dataframe
+        """
+        df = pd.read_csv(file_path, skiprows=3, sep=r'\s+', dtype={"FREQ(GHz)": str, "BT(K)": float})
+        df["BT(K)"] = df["BT(K)"].round(5)
         return df
