@@ -1,5 +1,5 @@
+import json
 import os.path
-
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -221,6 +221,21 @@ class SoundingUtils:
             df = df[df["GPH"] >= start_h]
         return df[df["GPH"] <= end_h]
 
+    @staticmethod
+    def get_time(filename):
+        """探空文件名中提取时间"""
+        time = filename.split("_")[1][:-4]
+        time = datetime.strptime(time, "%Y%m%d%H%M%S")
+        return str(time)
+
+    @staticmethod
+    def surface_tphh(df):
+        """
+        提取0层温压湿高
+        @return: [温度， 压强， 湿度， 高度]
+        """
+        return df.iloc[0]
+
 
 class ForwardUtils:
     """正演结果解析类"""
@@ -235,6 +250,19 @@ class ForwardUtils:
         df = df.loc[index]
         df["FREQ(GHz)"] = df["FREQ(GHz)"].apply(lambda x: 'CH' + x)
         return df["FREQ(GHz)"].tolist(), df["BT(K)"].tolist()
+
+
+class ModelUtils:
+    """模型解析工具"""
+    @staticmethod
+    def channels_map(model_json):
+        """
+        提取模型的通道映射
+        @param model_json:
+        @return: 映射列表
+        """
+        return model_json["input_nodes"]["inputBtNodes"]
+
 
 class ParseFiles:
     """解析文件类, 一般情况下返回dafaframe"""
@@ -301,3 +329,14 @@ class ParseFiles:
         df = pd.read_csv(file_path, skiprows=3, sep=r'\s+', dtype={"FREQ(GHz)": str, "BT(K)": float})
         df["BT(K)"] = df["BT(K)"].round(5)
         return df
+
+    @staticmethod
+    def parse_model(file_path):
+        """
+        解析模型
+        @param file_path:
+        @return: json
+        """
+        with open(file_path, "r", encoding="utf8") as f:
+            model = json.load(f)
+        return model
