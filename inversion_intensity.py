@@ -1,6 +1,3 @@
-import pandas as pd
-
-
 def get_IOI(heights, temperatures):
     """
     计算逆温强度
@@ -34,6 +31,6 @@ def get_IOI(heights, temperatures):
 
             # 温差大于1视为存在逆温层
             if delta_T > 1:
-                result = [H1, H2, round(delta_T / delta_H, 2)]
+                result = [H1, H2, delta_H, delta_T, round(delta_T / delta_H, 2)]
                 results.append(result)
     return results
