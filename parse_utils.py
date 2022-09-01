@@ -151,6 +151,16 @@ class WindUtils:
         return time
 
     @staticmethod
+    def get_site(file_path):
+        """提取风廓线数据文件中的站点经纬度"""
+        with open(file_path, "r") as f:
+            f.readline()
+            meta = f.readline()
+            meta = meta.split()
+            lon, lat = meta[1], meta[2]
+        return float(lon), float(lat)
+
+    @staticmethod
     def interp_wspeed(height, data_heights, data_wspeeds):
         """
         根据高度列表插值风速
@@ -306,14 +316,14 @@ class ParseFiles:
         return df
 
     @staticmethod
-    def parse_sounding(file_path, kind="ec"):
+    def parse_sounding(file_path, isSURP=True):
         """
         解析探空数据
         @param file_path:
-        @param kind: 探空数据源或ec数据源
+        @param isSURP: 探空数据源或ec数据源
         @return:dataframe
         """
-        if kind == "ec":
+        if isSURP:
             df = pd.read_csv(file_path, skiprows=1, sep=r'\s+')
         else:
             df = pd.read_csv(file_path, sep=r'\s+', header=None, names=["TEM", "PRS_HWC", "RHU", "GPH"])
