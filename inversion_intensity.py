@@ -2,7 +2,7 @@ def get_IOI(heights, temperatures):
     """
     计算逆温强度
     :param temperatures: 索引为高度（km）， 值为温度（℃） 的Series
-    :return: [[底高1，顶高1，高差1, 温差1, 逆温强度1], [底高2, 顶高2, 高差1, 温差1, 逆温强度2], ... ](可能出现多个逆温层)
+    :return: [[底高1，顶高1，逆温厚度1, 逆温差1, 逆温强度1], [底高2, 顶高2, 逆温厚度2, 逆温差2, 逆温强度2], ... ](可能出现多个逆温层)
     """
     # heights = list(map(lambda x: float(x) / 1000, heights))
     # temperatures = pd.Series(temperatures, heights)

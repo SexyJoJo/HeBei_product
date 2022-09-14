@@ -1,8 +1,10 @@
+import matplotlib.pyplot as plt
 from inversion_intensity import get_IOI
 import os
 import pandas as pd
 from pblh import get_pblh
 from VI import get_VI
+import numpy as np
 
 
 def read_file(file):
@@ -70,3 +72,23 @@ def read_file(file):
 #
 # VI = get_VI(heights, temperatures, pressures, speeds, directs)
 # print(VI)
+
+tDiffList = [4.159, 7.492, -2.963, 2.923, 1.365, 1.379, 2.49, 6.356, 10.696, 4.227, 11.514, 6.835, 8.658, 8.988, 146.732, 5.592, 2.439, 1.331, 4.194, 5.514, 0.003, 5.018, -0.149, 5.277, 0.602, 7.917, 6.381, 10.476, 2.317, 8.691, 1.295, 43.783, 15.86, 6.442, 6.634, 6.361, 11.062, 1.22, 13.95, 12.05, 45.598, 106.51, 33.57, 2.004, 8.614, 3.748, 4.122, 7.598, 1.704, 1.741, 6.096, 1.803, 4.55, 4.776, 4.81, 1.143, 3.429, 1.12, 3.602, 5.044, 3.466, 6.68, 6.734, 1.265, 2.62, 4.484, 3.634, 7.239, 5.398, 4.795, 3.513, 5.886, 3.02, 3.196, 9.813, 10.581]
+tLiquidList = [32.454, 32.307, 29.718, 27.795, 23.074, 26.387, 25.949, 25.456, 27.139, 29.263, 29.46, 34.617, 29.262, 29.024, 244.174, 22.878, 27.422, 22.474, 21.688, 27.868, 31.038, 30.78, 34.445, 32.685, 33.294, 36.351, 33.301, 44.563, 37.09, 34.407, 35.442, 108.116, 33.89, 47.359, 28.628, 25.986, 26.97, 29.204, 32.087, 33.798, 157.294, 211.995, 112.854, 30.481, 29.447, 30.862, 22.071, 25.042, 26.113, 35.153, 37.408, 34.847, 31.22, 28.6, 35.439, 21.284, 25.14, 19.951, 21.246, 26.582, 23.468, 22.016, 23.333, 26.392, 22.361, 20.778, 22.837, 29.253, 26.041, 25.736, 27.181, 27.984, 28.859, 26.536, 27.675, 28.68]
+
+
+correction = np.polyfit(x=tDiffList,
+                        y=tLiquidList,
+                        deg=2)
+z = np.polyval(correction, tDiffList)
+# z = np.polyval(correction, tDiffList)
+results = []
+for i in tDiffList:
+    a = i * i * correction[0] + i * correction[1] + correction[2]
+    results.append(a)
+
+plt.plot(tDiffList, tLiquidList, 'o')
+print(correction)
+plt.plot(tDiffList, z)
+# plt.plot(tDiffList, results)
+plt.show()
