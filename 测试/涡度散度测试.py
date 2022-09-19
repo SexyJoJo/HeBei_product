@@ -31,8 +31,8 @@ for h in heights:
     # vorti = vorticity_divergence.get_vorticity(stations["53399"], stations["53996"], stations["54304"])
     # print(f"站点53399, 53996, 54304")
     # print(f"高度层{h}：涡度：{vorti[0]}, 散度：{diver[0]}")
-
-    diver = vorticity_divergence.get_divergence(stations["54311"], stations["54534"], stations["54304"])
-    vorti = vorticity_divergence.get_vorticity(stations["54311"], stations["54534"], stations["54304"])
-    print(f"站点54311, 54534, 54304")
-    print(f"高度层{h}：涡度：{vorti[0]}, 散度：{diver[0]}")
+    print(stations["54311"], stations["54534"], stations["54304"])
+    # diver = vorticity_divergence.get_divergence(stations["54311"], stations["54534"], stations["54304"])
+    # vorti = vorticity_divergence.get_vorticity(stations["54311"], stations["54534"], stations["54304"])
+    # print(f"站点54311, 54534, 54304")
+    # print(f"高度层{h}：涡度：{vorti[0]}, 散度：{diver[0]}")

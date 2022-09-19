@@ -1,12 +1,17 @@
 import base64
 import json
-import TlnP
 import parse_utils
-import inversion_intensity
 from io import BytesIO
 from flask import Flask, request, jsonify
 
+import inversion_intensity
+import TlnP
+from pblh import get_pblh2
+from VI import get_VI
+from vorticity_divergence import get_divergence, get_vorticity
+
 app = Flask(__name__)
+
 
 @app.route('/')
 @app.route('/inversionIntensity', methods=['POST'])
@@ -43,6 +48,60 @@ def tlnp():
         print(e)
         return jsonify({"img_base64": None, "msg": "fail"})
 
+
+@app.route('/pblh', methods=['POST'])
+def pblh():
+    data = json.loads(request.data)
+    heights = data["heights"]
+    temperatures = data["temperatures"]
+    try:
+        PBLH = get_pblh2(heights, temperatures)
+        return jsonify({"result": PBLH, "msg": "success"})
+    except Exception as e:
+        print(e)
+        return jsonify({"result": None, "msg": "fail"})
+
+
+@app.route('/VI', methods=['POST'])
+def VI():
+    data = json.loads(request.data)
+    heights = data["heights"]
+    temperatures = data["temperatures"]
+    wind_speeds = data["w_speeds"]
+    try:
+        vi = get_VI(heights, temperatures, wind_speeds)
+        return jsonify({"result": vi, "msg": "success"})
+    except Exception as e:
+        print(e)
+        return jsonify({"result": None, "msg": "fail"})
+
+
+@app.route('/divergence', methods=['POST'])
+def divergence():
+    data = json.loads(request.data)
+    site1 = eval(data["site1"])
+    site2 = eval(data["site2"])
+    site3 = eval(data["site3"])
+    try:
+        result = get_divergence(site1, site2, site3)[0]
+        return jsonify({"result": result, "msg": "success"})
+    except Exception as e:
+        print(e)
+        return jsonify({"result": None, "msg": "fail"})
+
+
+@app.route('/vorticity', methods=['POST'])
+def vorticity():
+    data = json.loads(request.data)
+    site1 = eval(data["site1"])
+    site2 = eval(data["site2"])
+    site3 = eval(data["site3"])
+    try:
+        result = get_vorticity(site1, site2, site3)[0]
+        return jsonify({"result": result, "msg": "success"})
+    except Exception as e:
+        print(e)
+        return jsonify({"result": None, "msg": "fail"})
 
 @app.route('/utils/interp_tempers', methods=['POST'])
 def interp_tempers():

@@ -31,7 +31,7 @@ def get_divergence(site1, site2, site3):
     divergence = ((site2[2] - site1[2]) * (site3[1] - site1[1]) - (site3[2] - site1[2]) * (site2[1] - site1[1]) +
                   (site2[0] - site1[0]) * (site3[3] - site1[3]) - (site3[0] - site1[0]) * (site2[3] - site1[3])) / \
                  ((site2[0] - site1[0]) * (site3[1] - site1[1]) - (site3[0] - site1[0]) * (site2[1] - site1[1]))
-    return divergence, max_angle
+    return round(divergence, 3), max_angle
 
 
 def get_vorticity(site1, site2, site3):
@@ -42,4 +42,4 @@ def get_vorticity(site1, site2, site3):
     vorticity = ((site2[3] - site1[3]) * (site3[1] - site1[1]) - (site3[3] - site1[3]) * (site2[1] - site1[1]) +
                  (site2[0] - site1[0]) * (site3[2] - site1[2]) - (site3[0] - site1[0]) * (site2[2] - site1[2])) / \
                 ((site2[0] - site1[0]) * (site3[1] - site1[1]) - (site3[0] - site1[0]) * (site2[1] - site1[1]))
-    return vorticity, max_angle
+    return round(vorticity, 3), max_angle

@@ -155,10 +155,11 @@ if __name__ == '__main__':
     for h in heights:
         directs.append(WindUtils.interp_wdirect(h, ori_heights, ori_directs))
         speeds.append(WindUtils.interp_wspeed(h, ori_heights, ori_speeds))
-    pblh = get_pblh(heights, tempers, pressures, speeds, directs)
+    pblh = get_pblh2(heights, tempers)
+    # vi = get
     # print("高度：", heights)
     # print("温度：", tempers)
     # print("压强：", pressures)
     # print("风速：", speeds)
     # print("风向：", directs)
-    # print("边界层高度", pblh)
+    print("边界层高度", pblh)
