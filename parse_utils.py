@@ -2,12 +2,13 @@ import json
 import os.path
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from scipy.interpolate import interp1d
 
 
 class MetCals:
     """气象计算工具"""
+
     @staticmethod
     def prs2height(prs):
         return round(44331 * (1 - (prs / 1013.25) ** 0.1903), 3)
@@ -40,7 +41,7 @@ class MetCals:
             pressures.append(MetCals.height2prs(height))
         return pressures
 
-    @ staticmethod
+    @staticmethod
     def get_potem(t, p):
         """
         获得未饱和湿位温(Potential temperature)(°C)  位温定义为空气沿干绝热线过程变化到气压p=1000hPa时的温度（天气分析 P16）
@@ -51,8 +52,52 @@ class MetCals:
         return theta
 
 
+class Lv1Utils:
+    """微波辐射计Lv1解析工具类"""
+
+    @staticmethod
+    def json2file(json_path, out_dir):
+        """华泰LV1亮温接口数据转换为lv1文件"""
+        with open(json_path, 'r') as f:
+            contents = json.load(f)["content"]
+            station = contents[0]["stationNum"]
+            freqencys = [f'Ch{x[:-4]}' for x in contents[0]['aisle']]
+            columns = ['DateTime', 'SurTem(℃)', 'SurHum(%)', 'SurPre(hPa)', 'Tir(℃)', 'Rain', 'QCFlag', 'Az(deg)',
+                       'El(deg)'] + freqencys + ['QCFlag_BT']
+
+            datatime = datetime.strptime(contents[0]['dataTime'], '%Y-%m-%d %H:%M:%S')
+            filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+            stime = datetime(datatime.year, datatime.month, datatime.day)
+            etime = stime + timedelta(days=1)
+
+        rows = []   # 一天内的所有行
+        for content in contents:
+            datatime = datetime.strptime(content['dataTime'], '%Y-%m-%d %H:%M:%S')
+
+            if stime <= datatime < etime and (content is not contents[-1]):
+                row = [content['dataTime'], 0, 0, 0, 0, 0, 0, 0, 0] + eval(content['aisleBt']) + ['00000']
+                rows.append(row)
+            else:
+                df = pd.DataFrame(rows, columns=columns)
+                df.index.name = 'Record'
+                print(f"开始保存{filename}")
+                df.to_csv(os.path.join(out_dir, filename))
+                with open(os.path.join(out_dir, filename), "r+", encoding='utf8') as f:
+                    old = f.read()
+                    f.seek(0)
+                    f.write("MWR, 01.00\n")
+                    f.write(f"{station},0.0,0.0,0.0,xxx,0\n")
+                    f.write(old)
+
+                rows = []
+                filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+                stime = datetime(datatime.year, datatime.month, datatime.day)
+                etime = stime + timedelta(days=1)
+
+
 class Lv2Utils:
     """微波辐射计Lv2解析工具类"""
+
     @staticmethod
     def get_time(filename, kind="datetime"):
         """
@@ -139,6 +184,7 @@ class Lv2Utils:
 
 class WindUtils:
     """风廓线数据解析工具类"""
+
     @staticmethod
     def minute_wind_time(filename):
         """
@@ -206,6 +252,7 @@ class WindUtils:
 
 class SoundingUtils:
     """探空文件数据处理工具类"""
+
     @staticmethod
     def interp_tempers(height, data_height, data_tempers):
         """
@@ -218,7 +265,7 @@ class SoundingUtils:
         f = interp1d(data_height, data_tempers, bounds_error=False, fill_value='extrapolate')
         return float(f(height))
 
-    @ staticmethod
+    @staticmethod
     def cap_by_height(df, end_h, start_h=0):
         """
         根据起始与结束高度截取探空dataframe
@@ -249,6 +296,7 @@ class SoundingUtils:
 
 class ForwardUtils:
     """正演结果解析类"""
+
     @staticmethod
     def freq_and_bt(df, index):
         """
@@ -264,6 +312,7 @@ class ForwardUtils:
 
 class ModelUtils:
     """模型解析工具"""
+
     @staticmethod
     def channels_map(model_json):
         """
@@ -276,6 +325,7 @@ class ModelUtils:
 
 class ParseFiles:
     """解析文件类, 一般情况下返回dafaframe"""
+
     @staticmethod
     def cap_week_wind(file_path, station, time_str):
         """
@@ -350,3 +400,7 @@ class ParseFiles:
         with open(file_path, "r", encoding="utf8") as f:
             model = json.load(f)
         return model
+
+
+if __name__ == '__main__':
+    Lv1Utils.json2file(r"C:\Users\JOJO\Desktop\天津LV1.json", r"C:\Users\JOJO\Desktop\LV1")
