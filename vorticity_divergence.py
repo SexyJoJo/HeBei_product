@@ -1,5 +1,10 @@
 import math
 
+def get_u(speed, direct):
+    return speed * math.sin(direct)
+
+def get_v(speed, direct):
+    return speed * math.cos(direct)
 
 def cal_ang(point_1, point_2, point_3):
     """
@@ -23,9 +28,21 @@ def cal_ang(point_1, point_2, point_3):
 
 def get_divergence(site1, site2, site3):
     """计算散度
-    site = (x, y, u, v)"""
+    site = (x, y, 风速, 风向)"""
     if len(site1) != 4 or len(site2) != 4 or len(site3) != 4:
-        raise Exception("元组缺少要素, 分别需要（经度坐标，纬度坐标，经向风分量， 纬向风分量）组成一个元组")
+        raise Exception("元组缺少要素, 分别需要（经度坐标，纬度坐标，风速，风向）组成一个元组")
+
+    # site转为[x, y, u, v]
+    site1 = list(site1)
+    site2 = list(site2)
+    site3 = list(site3)
+
+    speed1, direct1 = site1[2], site1[3]
+    speed2, direct2 = site2[2], site2[3]
+    speed3, direct3 = site3[2], site3[3]
+    site1[2], site1[3] = get_u(speed1, direct1), get_v(speed1, direct1)
+    site2[2], site2[3] = get_u(speed2, direct2), get_v(speed2, direct2)
+    site3[2], site3[3] = get_u(speed3, direct3), get_v(speed3, direct3)
 
     max_angle = cal_ang((site1[0], site1[1]), (site2[0], site2[1]), (site3[0], site3[1]))
     divergence = ((site2[2] - site1[2]) * (site3[1] - site1[1]) - (site3[2] - site1[2]) * (site2[1] - site1[1]) +
@@ -36,7 +53,19 @@ def get_divergence(site1, site2, site3):
 
 def get_vorticity(site1, site2, site3):
     if len(site1) != 4 or len(site2) != 4 or len(site3) != 4:
-        raise Exception("元组缺少要素, 分别需要（经度坐标，纬度坐标，经向风分量， 纬向风分量）组成一个元组")
+        raise Exception("元组缺少要素, 分别需要（经度坐标，纬度坐标，风速， 风向）组成一个元组")
+
+    # site转为[x, y, u, v]
+    site1 = list(site1)
+    site2 = list(site2)
+    site3 = list(site3)
+
+    speed1, direct1 = site1[2], site1[3]
+    speed2, direct2 = site2[2], site2[3]
+    speed3, direct3 = site3[2], site3[3]
+    site1[2], site1[3] = get_u(speed1, direct1), get_v(speed1, direct1)
+    site2[2], site2[3] = get_u(speed2, direct2), get_v(speed2, direct2)
+    site3[2], site3[3] = get_u(speed3, direct3), get_v(speed3, direct3)
 
     max_angle = cal_ang((site1[0], site1[1]), (site2[0], site2[1]), (site3[0], site3[1]))
     vorticity = ((site2[3] - site1[3]) * (site3[1] - site1[1]) - (site3[3] - site1[3]) * (site2[1] - site1[1]) +

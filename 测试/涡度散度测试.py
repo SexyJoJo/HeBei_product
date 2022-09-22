@@ -20,17 +20,17 @@ for h in heights:
 
             w_speed = df[df["height"] == h]["hori_speed"].tolist()[0]
             w_direct = df[df["height"] == h]["hori_direct"].tolist()[0]
-            u = round(w_speed * math.sin(w_direct), 2)  # 纬向风分量
-            v = round(w_speed * math.cos(w_direct), 2)  # 经向风分量
+            # u = round(w_speed * math.sin(w_direct), 2)  # 纬向风分量
+            # v = round(w_speed * math.cos(w_direct), 2)  # 经向风分量
 
             # info.append()
-            stations[station] = (lon, lat, u, v)
+            stations[station] = (lon, lat, w_speed, w_direct)
 
     # print(stations)
-    # diver = vorticity_divergence.get_divergence(stations["53399"], stations["53996"], stations["54304"])
-    # vorti = vorticity_divergence.get_vorticity(stations["53399"], stations["53996"], stations["54304"])
+    diver = vorticity_divergence.get_divergence(stations["53399"], stations["53996"], stations["54304"])
+    vorti = vorticity_divergence.get_vorticity(stations["53399"], stations["53996"], stations["54304"])
     # print(f"站点53399, 53996, 54304")
-    # print(f"高度层{h}：涡度：{vorti[0]}, 散度：{diver[0]}")
+    print(f"高度层{h}：涡度：{vorti[0]}, 散度：{diver[0]}")
     print(stations["54311"], stations["54534"], stations["54304"])
     # diver = vorticity_divergence.get_divergence(stations["54311"], stations["54534"], stations["54304"])
     # vorti = vorticity_divergence.get_vorticity(stations["54311"], stations["54534"], stations["54304"])
