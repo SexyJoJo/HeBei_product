@@ -218,7 +218,7 @@ class WindUtils:
         f = interp1d(data_heights, data_wspeeds, bounds_error=False, fill_value='extrapolate')
         if f(height) <= 0:
             return 0.1
-        return float(f(height))
+        return round(float(f(height)), 3)
 
     @staticmethod
     def interp_wdirect(height, data_height, data_wdirect):
@@ -247,7 +247,7 @@ class WindUtils:
         w_dircect = f(height)
         if w_dircect >= 360:
             w_dircect -= 360
-        return float(w_dircect)
+        return round(float(w_dircect), 3)
 
 
 class SoundingUtils:

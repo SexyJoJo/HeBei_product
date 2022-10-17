@@ -3,7 +3,7 @@ import json
 import parse_utils
 from io import BytesIO
 from flask import Flask, request, jsonify
-
+import indices
 import inversion_intensity
 import TlnP
 from pblh import get_pblh2
@@ -20,8 +20,8 @@ def inversionIntensity():
     heights = data["heights"]
     temperatures = data["temperatures"]
     try:
-        IOI = inversion_intensity.get_IOI(heights, temperatures)
-        return jsonify({"result": IOI, "msg": "success"})
+        IOI, avgIOI = inversion_intensity.get_IOI(heights, temperatures)
+        return jsonify({"result": IOI, "avgIOI": avgIOI, "msg": "success"})
     except Exception:
         return jsonify({"result": None, "msg": "fail"})
 
@@ -137,6 +137,29 @@ def interp_wdirect():
     except Exception as e:
         print(e)
         return jsonify({"result": None, "msg": "fail"})
+
+@app.route('/a_index', methods=['POST'])
+def a_index():
+    data = json.loads(request.data)
+    pressure, temperature, rhu = data["pressure"], data["temperature"], data["rhu"]
+    try:
+        result = indices.A_index(pressure, temperature, rhu)
+        return jsonify({"result": result, "msg": "success"})
+    except Exception as e:
+        print(e)
+        return jsonify({"result": None, "msg": "fail"})
+
+@app.route('/tt_index', methods=['POST'])
+def tt_index():
+    data = json.loads(request.data)
+    pressure, temperature, rhu = data["pressure"], data["temperature"], data["rhu"]
+    try:
+        result = indices.TT_Index(pressure, temperature, rhu)
+        return jsonify({"result": result, "msg": "success"})
+    except Exception as e:
+        print(e)
+        return jsonify({"result": None, "msg": "fail"})
+
 
 
 if __name__ == '__main__':
