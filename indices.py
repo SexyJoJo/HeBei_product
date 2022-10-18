@@ -1,27 +1,24 @@
 from scipy.interpolate import interp1d
 
+
 def A_index(data_press, data_temp, data_rhu):
-    try:
-        data_dewp = cal_dewp(data_temp, data_rhu)
-        T500 = get_temp(500, data_press, data_temp)
-        Td500 = get_dewp(500, data_press, data_dewp)
-        T850 = get_temp(850, data_press, data_temp)
-        Td850 = get_dewp(850, data_press, data_dewp)
-        T700 = get_temp(700, data_press, data_temp)
-        Td700 = get_dewp(700, data_press, data_dewp)
-        A = (T850 - T500) - ((T850 - Td850) + (T700 - Td700) + (T500 - Td500))
-        return round(A, 3)
-    except Exception:
-        return None
+    data_dewp = cal_dewp(data_temp, data_rhu)
+    T500 = get_temp(500, data_press, data_temp)
+    Td500 = get_dewp(500, data_press, data_dewp)
+    T850 = get_temp(850, data_press, data_temp)
+    Td850 = get_dewp(850, data_press, data_dewp)
+    T700 = get_temp(700, data_press, data_temp)
+    Td700 = get_dewp(700, data_press, data_dewp)
+    A = (T850 - T500) - ((T850 - Td850) + (T700 - Td700) + (T500 - Td500))
+    return round(A, 3)
+
 
 def TT_Index(data_press, data_temp, data_rhu):
     """全总指数"""
-    try:
-        data_dewp = cal_dewp(data_temp, data_rhu)
-        data = get_TT(data_press, data_temp, data_dewp)
-        return data
-    except Exception:
-        return None
+    data_dewp = cal_dewp(data_temp, data_rhu)
+    data = get_TT(data_press, data_temp, data_dewp)
+    return data
+
 
 def get_TT(data_press, data_temp, data_dewp):
     """
@@ -36,16 +33,18 @@ def get_TT(data_press, data_temp, data_dewp):
     TT = T850 + Td850 - 2 * T500
     return round(TT, 3)
 
+
 def get_temp(press, data_press, data_temp):
-    f = interp1d(data_press, data_temp)
+    f = interp1d(data_press, data_temp, bounds_error=False, fill_value='extrapolate')
     temp = f(press)
     return temp
 
 
 def get_dewp(press, data_press, data_dewp):
-    f = interp1d(data_press, data_dewp)
+    f = interp1d(data_press, data_dewp, bounds_error=False, fill_value='extrapolate')
     dewp = f(press)
     return dewp
+
 
 def cal_dewp(data_temp, data_rh):
     """

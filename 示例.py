@@ -26,7 +26,7 @@ rhu = [26.26, 12.07, 7.38, 7.65, 8.81, 10.07, 9.83, 9.93, 10.58, 12.51, 14.45, 1
 # plt = TlnP.plot_tlnp(tem, prs, rhu, w_speed, w_direct)
 # plt.show()
 
-VWS.plot_vws(height, w_speed, w_direct)
+# VWS.plot_vws(height, w_speed, w_direct)
 
 # for root, dirs, files in os.walk("Lv2数据"):
 #     for file in files:

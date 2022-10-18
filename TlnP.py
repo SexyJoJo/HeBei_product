@@ -35,6 +35,7 @@ def plot_tlnp(tem, prs, rhu, wind_speed, wind_direct):
     skew.ax.set_xlabel('T/(℃)')
     skew.ax.set_ylim(1000, 500)
     skew.ax.set_xlim(-40, 40)
+    skew.ax.set_aspect(200)
     # 画底图上的干绝热线、湿绝热线、饱和比湿线，可以注释掉，看看哪个是那个
     skew.plot_dry_adiabats()  # 干绝热线（红色虚线）
     skew.plot_moist_adiabats()  # 湿绝热线（蓝色虚线）

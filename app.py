@@ -166,9 +166,9 @@ def interp_wdirect():
 @app.route('/a_index', methods=['POST'])
 def a_index():
     data = json.loads(request.data)
-    pressure, temperature, rhu = data["pressure"], data["temperature"], data["rhu"]
+    pressure, temperature, humidity = data["prs"], data["tem"], data["rhu"]
     try:
-        result = indices.A_index(pressure, temperature, rhu)
+        result = indices.A_index(pressure, temperature, humidity)
         return jsonify({"result": result, "msg": "success"})
     except Exception as e:
         print(e)
@@ -178,7 +178,7 @@ def a_index():
 @app.route('/tt_index', methods=['POST'])
 def tt_index():
     data = json.loads(request.data)
-    pressure, temperature, rhu = data["pressure"], data["temperature"], data["rhu"]
+    pressure, temperature, rhu = data["prs"], data["tem"], data["rhu"]
     try:
         result = indices.TT_Index(pressure, temperature, rhu)
         return jsonify({"result": result, "msg": "success"})
