@@ -55,6 +55,6 @@ def plot_vws(heights, w_speeds, w_directs):
     plt.xlabel("顶高 km")
     plt.ylabel("底高 km")
     plt.title("垂直风切变 m/(s·km)")
-    plt.show()
+    # plt.show()
     return plt
 
