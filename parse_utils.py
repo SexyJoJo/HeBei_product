@@ -1,5 +1,8 @@
 import json
 import os.path
+import time
+from urllib import request, error
+
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -56,43 +59,164 @@ class Lv1Utils:
     """微波辐射计Lv1解析工具类"""
 
     @staticmethod
-    def json2file(json_path, out_dir):
-        """华泰LV1亮温接口数据转换为lv1文件"""
-        with open(json_path, 'r') as f:
-            contents = json.load(f)["content"]
-            station = contents[0]["stationNum"]
-            freqencys = [f'Ch{x[:-4]}' for x in contents[0]['aisle']]
-            columns = ['DateTime', 'SurTem(℃)', 'SurHum(%)', 'SurPre(hPa)', 'Tir(℃)', 'Rain', 'QCFlag', 'Az(deg)',
-                       'El(deg)'] + freqencys + ['QCFlag_BT']
+    def request_lv1_dicts(station_num, stime, etime):
+        """请求LV1接口数据"""
+        url = rf"http://10.36.6.201:8118/Radar/TianYan/vertProductData/getVertMwRadiacOfAisleData?stationCode={station_num}&sTime={stime}%2000:00:00&eTime={etime}%2000:00:00"
+        while True:
+            try:
+                print(f"开始请求{station_num}站{stime}至{etime}的lv1数据")
+                response = request.urlopen(url)
+                break
+            except error.HTTPError:
+                print("请求该范围lv1失败, 2秒后自动再次请求")
+                time.sleep(2)
+                continue
+        content = response.read().decode('utf-8')
+        content = json.loads(content)["content"]
+        return content
 
-            datatime = datetime.strptime(contents[0]['dataTime'], '%Y-%m-%d %H:%M:%S')
-            filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
-            stime = datetime(datatime.year, datatime.month, datatime.day)
-            etime = stime + timedelta(days=1)
+    @staticmethod
+    def lv1dicts2files(contents, out_dir="./LV1"):
+        """LV1接口数据转为文件"""
+        if len(contents) == 0:
+            print("当前时间段无lv1数据")
+            return
 
-        rows = []   # 一天内的所有行
+        station = contents[0]["stationNum"]
+        freqencys = [f'Ch{x[:-4]}' for x in contents[0]['aisle']]
+        columns = ['DateTime', 'SurTem(℃)', 'SurHum(%)', 'SurPre(hPa)', 'Tir(℃)', 'Rain', 'QCFlag', 'Az(deg)',
+                   'El(deg)'] + freqencys + ['QCFlag_BT']
+
+        datatime = datetime.strptime(contents[0]['dataTime'], '%Y-%m-%d %H:%M:%S')
+        filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+        stime = datetime(datatime.year, datatime.month, datatime.day)
+        etime = stime + timedelta(days=1)
+
+        rows = []  # 一天内的所有行
         for content in contents:
             datatime = datetime.strptime(content['dataTime'], '%Y-%m-%d %H:%M:%S')
 
-            if stime <= datatime < etime and (content is not contents[-1]):
-                row = [content['dataTime'], 0, 0, 0, 0, 0, 0, 0, 0] + eval(content['aisleBt']) + ['00000']
-                rows.append(row)
-            else:
-                df = pd.DataFrame(rows, columns=columns)
-                df.index.name = 'Record'
-                print(f"开始保存{filename}")
-                df.to_csv(os.path.join(out_dir, filename))
-                with open(os.path.join(out_dir, filename), "r+", encoding='utf8') as f:
-                    old = f.read()
-                    f.seek(0)
-                    f.write("MWR, 01.00\n")
-                    f.write(f"{station},0.0,0.0,0.0,xxx,0\n")
-                    f.write(old)
+            try:
+                if stime <= datatime <= etime and (content is not contents[-1]):
+                    row = [content['dataTime'], 0, 0, 0, 0, 0, 0, 0, 0] + eval(content['aisleBt']) + ['00000']
+                    rows.append(row)
+                else:
+                    df = pd.DataFrame(rows, columns=columns)
+                    df.index.name = 'Record'
+                    print(f"开始保存{filename}")
 
-                rows = []
-                filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
-                stime = datetime(datatime.year, datatime.month, datatime.day)
-                etime = stime + timedelta(days=1)
+                    if not os.path.exists(os.path.join(out_dir, station)):
+                        os.makedirs(os.path.join(out_dir, station))
+
+                    df.to_csv(os.path.join(out_dir, station, filename))
+                    with open(os.path.join(out_dir, station, filename), "r+", encoding='utf8') as f:
+                        old = f.read()
+                        f.seek(0)
+                        f.write("MWR, 01.00\n")
+                        f.write(f"{station},0.0,0.0,0.0,xxx,0\n")
+                        f.write(old)
+
+                    rows = []
+                    filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+                    stime = datetime(datatime.year, datatime.month, datatime.day)
+                    etime = stime + timedelta(days=1)
+            except NameError:
+                print("error")
+                continue
+
+    @staticmethod
+    def brt2lv1(station, base_dir, out_dir):
+        """
+        BRT格式亮温数据转为lv1标准文件
+        @param station: 站号
+        @param base_dir: 数据目录
+        @param out_dir: 输出目录
+        """
+        station = str(station)
+        for root, dirs, files in os.walk(base_dir):
+            for file in files:
+                if file.endswith("K.BRT"):
+                    k_channel_file = file
+                    v_channel_file = file.replace("K.BRT", "V.BRT")
+
+                    k_df = pd.read_csv(os.path.join(base_dir, k_channel_file), sep="  ")
+                    v_df = pd.read_csv(os.path.join(base_dir, v_channel_file), sep="  ")
+                    del v_df["YYYY-MM-DD-HH:MM:SS"]
+                    df = pd.concat([k_df, v_df], axis=1, join="inner")
+
+                    freqencys = []
+                    for i in df.columns[1:]:
+                        if i.endswith("GHz"):
+                            i = 'Ch' + i[:-3]
+                            freqencys.append(i)
+                    df.columns = ["DateTime"] + freqencys
+                    columns = ['DateTime', 'SurTem(℃)', 'SurHum(%)', 'SurPre(hPa)', 'Tir(℃)', 'Rain', 'QCFlag',
+                               'Az(deg)', 'El(deg)'] + freqencys + ['QCFlag_BT']
+                    df["SurTem(℃)"] = 0
+                    df["SurHum(%)"] = 0
+                    df["SurPre(hPa)"] = 0
+                    df["Rain"] = 0
+                    df["QCFlag"] = 0
+                    df["Tir(℃)"] = 0
+                    df["Az(deg)"] = 0
+                    df["El(deg)"] = 0
+                    df["QCFlag_BT"] = "00000"
+                    df = df[columns]
+                    datatime = datetime.strptime(df['DateTime'][0], '%Y-%m-%d %H:%M:%S')
+                    filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+                    df["DateTime"] = df["DateTime"].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S')) + timedelta(hours=0.5)
+                    print(filename)
+
+                    if not os.path.exists(os.path.join(out_dir, station)):
+                        os.makedirs(os.path.join(out_dir, station))
+                    df.to_csv(os.path.join(out_dir, station, filename))
+
+                    with open(os.path.join(out_dir, station, filename), "r+", encoding='utf8') as f:
+                        old = f.read()
+                        f.seek(0)
+                        f.write("MWR, 01.00\n")
+                        f.write(f"{station},0.0,0.0,0.0,xxx,0\n")
+                        f.write(f"Record")
+                        f.write(old)
+
+    # @staticmethod
+    # def json2file(json_path, out_dir):
+    #     """华泰LV1亮温接口数据转换为lv1文件"""
+    #     with open(json_path, 'r') as f:
+    #         contents = json.load(f)["content"]
+    #         station = contents[0]["stationNum"]
+    #         freqencys = [f'Ch{x[:-4]}' for x in contents[0]['aisle']]
+    #         columns = ['DateTime', 'SurTem(℃)', 'SurHum(%)', 'SurPre(hPa)', 'Tir(℃)', 'Rain', 'QCFlag', 'Az(deg)',
+    #                    'El(deg)'] + freqencys + ['QCFlag_BT']
+    #
+    #         datatime = datetime.strptime(contents[0]['dataTime'], '%Y-%m-%d %H:%M:%S')
+    #         filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+    #         stime = datetime(datatime.year, datatime.month, datatime.day)
+    #         etime = stime + timedelta(days=1)
+    #
+    #     rows = []   # 一天内的所有行
+    #     for content in contents:
+    #         datatime = datetime.strptime(content['dataTime'], '%Y-%m-%d %H:%M:%S')
+    #
+    #         if stime <= datatime < etime and (content is not contents[-1]):
+    #             row = [content['dataTime'], 0, 0, 0, 0, 0, 0, 0, 0] + eval(content['aisleBt']) + ['00000']
+    #             rows.append(row)
+    #         else:
+    #             df = pd.DataFrame(rows, columns=columns)
+    #             df.index.name = 'Record'
+    #             print(f"开始保存{filename}")
+    #             df.to_csv(os.path.join(out_dir, filename))
+    #             with open(os.path.join(out_dir, filename), "r+", encoding='utf8') as f:
+    #                 old = f.read()
+    #                 f.seek(0)
+    #                 f.write("MWR, 01.00\n")
+    #                 f.write(f"{station},0.0,0.0,0.0,xxx,0\n")
+    #                 f.write(old)
+    #
+    #             rows = []
+    #             filename = f"Z_UPAR_I_{station}_{datetime.strftime(datatime, '%Y%m%d000000')}_O_YMWR_XXXX_RAW_D.txt"
+    #             stime = datetime(datatime.year, datatime.month, datatime.day)
+    #             etime = stime + timedelta(days=1)
 
 
 class Lv2Utils:
@@ -252,6 +376,66 @@ class WindUtils:
 
 class SoundingUtils:
     """探空文件数据处理工具类"""
+
+    @staticmethod
+    def request_sounding_dicts(station_num, stime, etime):
+        """请求探空接口数据"""
+        contents = []
+        stime = datetime.strptime(stime, "%Y-%m-%d")
+        etime = datetime.strptime(etime, "%Y-%m-%d")
+        curr_time = stime
+        while curr_time <= etime:
+            url = rf"http://10.36.6.201:8118/Radar/TianYan/vertProductData/getSoundingDataForDay?time={datetime.strftime(curr_time, '%Y%m%d')}000000&stationCode={station_num}"
+            while True:
+                try:
+                    print(f"开始请求{station_num}站{curr_time}的探空数据")
+                    response = request.urlopen(url)
+                    break
+                except error.HTTPError:
+                    print("请求该日探空失败, 2秒后自动再次请求")
+                    time.sleep(2)
+                    continue
+            content = response.read().decode('utf-8')
+            content = json.loads(content)["content"]
+            contents += content
+            curr_time += timedelta(days=1)
+        return contents
+
+    @staticmethod
+    def soundingdicts2files(contents, out_dir="./Sounding"):
+        """探空接口数据转为文件"""
+        station = contents[0]["stationCode"]
+
+        datatime = datetime.strptime(contents[0]['dataTime'], '%Y-%m-%d %H:%M:%S')
+        filename = f"{station}_{datetime.strftime(datatime, '%Y%m%d%H%M%S')}SUPR.txt"
+
+        for content in contents:
+            datatime = datetime.strptime(content['dataTime'], '%Y-%m-%d %H:%M:%S')
+            filename = f"{station}_{datetime.strftime(datatime, '%Y%m%d%H%M%S')}SUPR.txt"
+
+            content['humidity'] = content['humidity'].split(",")
+            content['pressure'] = content['pressure'].split(",")
+            content['tem'] = content['tem'].split(",")
+            content['height'] = content['height'].split(",")
+            content.pop("sh")
+            content.pop("wind")
+            content.pop("stationCode")
+            content.pop("dataTime")
+
+            df = pd.DataFrame.from_dict(content)
+            df['Second'] = 0
+            df = df.rename(columns={"humidity": "RHU", "pressure": "PRS_HWC", "tem": "TEM", "height": "GPH"})
+            df = df[['Second', 'TEM', 'PRS_HWC', 'RHU', 'GPH']]
+
+            if not os.path.exists(os.path.join(out_dir, station)):
+                os.makedirs(os.path.join(out_dir, station))
+            df.to_csv(os.path.join(out_dir, station, filename), index=False, sep=' ')
+
+            with open(os.path.join(out_dir, station, filename), "r+", encoding='utf8') as f:
+                old = f.read()
+                f.seek(0)
+                f.write("Sounding Data\n")
+                f.write(old)
 
     @staticmethod
     def interp_tempers(height, data_height, data_tempers):
